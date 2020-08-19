@@ -19,17 +19,19 @@ public class SpringSecurity extends WebSecurityConfigurerAdapter {
     DataSource dataSource;
 
     @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        auth.jdbcAuthentication().dataSource(dataSource)
-                .withDefaultSchema().withUser(User.withUsername("user").password("password").roles("USER")).
-                withUser(User.withUsername("admin").password("password").roles("ADMIN"));
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.jdbcAuthentication().dataSource(dataSource).usersByUsernameQuery("select username, password , enabled" + "from myusers" + "where username=?"
+        ).authoritiesByUsernameQuery("select username , authority" + "from authorities" + "where username =?");
+//                .withDefaultSchema().withUser(User.withUsername("user").password("password").roles("USER")).
+//                withUser(User.withUsername("admin").password("password").roles("ADMIN"));
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .authorizeRequests().antMatchers("/admin").hasRole("ADMIN").
-                antMatchers("/user").hasAnyRole("USER", "ADMIN")
+                .authorizeRequests().antMatchers("/admin").hasRole("ADMIN")
+                .antMatchers("/api").hasRole("ADMIN").
+                antMatchers("/user").hasAnyRole("ADMIN", "USER")
                 .antMatchers("/").permitAll()
                 .anyRequest().authenticated()
                 .and()
